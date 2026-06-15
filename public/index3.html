@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UPI Payment</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding-bottom: 220px;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      background-color: #5ac18a;
+      width: 100%;
+      padding: 14px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #countdown-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    #countdown-label,
+    #countdown-time {
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .amount-num {
+      font-size: 28px;
+      font-weight: bold;
+      color: #fff;
+      text-align: center;
+    }
+
+    /* ===== MAIN ===== */
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      flex: 1;
+    }
+
+    /* ===== DIVIDER ===== */
+    .divider-with-text {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      margin: 14px 0;
+    }
+
+    .divider-with-text::before,
+    .divider-with-text::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background-color: #ddd;
+    }
+
+    .divider-text {
+      margin: 0 10px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #555;
+      white-space: nowrap;
+    }
+
+    /* ===== STEP WRAPPER ===== */
+    .step-wrapper {
+      text-align: center;
+      width: 100%;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .step-wrapper p {
+      color: #333;
+    }
+
+    /* ===== QR CODE ===== */
+    .qrcode {
+      padding: 10px;
+      margin-bottom: 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .qrcode img {
+      width: 150px;
+      height: 150px;
+      display: block;
+    }
+
+    /* ===== UPI LIST (vertical with arrows) ===== */
+    .upi-list-vertical {
+      width: 100%;
+      list-style: none;
+      margin-bottom: 20px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .upi-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .upi-item-row:last-child {
+      border-bottom: none;
+    }
+
+    .upi-item-row:hover {
+      background-color: #f9f9f9;
+    }
+
+    .upi-info-row {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+
+    .upi-icon-sm {
+      width: 32px;
+      height: 32px;
+      margin-right: 12px;
+      object-fit: contain;
+    }
+
+    .upi-name-row {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .arrow-icon {
+      width: 10%;
+      min-width: 28px;
+      max-width: 44px;
+      object-fit: contain;
+    }
+
+    /* ===== PAYMENT APP LIST (horizontal icons) ===== */
+    .select-label {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 12px;
+      text-align: left;
+      font-weight: 500;
+      width: 100%;
+    }
+
+    .upi-list-horizontal {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: 100%;
+      margin-bottom: 20px;
+      padding: 0;
+    }
+
+    .upi-item-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      min-width: 64px;
+      flex: 1;
+      transition: background 0.15s;
+    }
+
+    .upi-item-icon:hover {
+      background-color: #f0f0f0;
+    }
+
+    .upi-icon-lg {
+      width: 40px;
+      height: 40px;
+      margin-bottom: 6px;
+      object-fit: contain;
+    }
+
+    .upi-label {
+      font-size: 11px;
+      color: #555;
+      text-align: center;
+    }
+
+    /* ===== COPY ACCOUNT ===== */
+    .copy-account-label {
+      font-size: 13px;
+      font-weight: bold;
+      text-align: center;
+      color: #333;
+      margin-bottom: 4px;
+    }
+
+    /* ===== FLOATING BOTTOM ===== */
+    .floating-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: #fff;
+      border-top: 1px solid #e0e0e0;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+      z-index: 100;
+    }
+
+    /* ===== UPI ID ROW ===== */
+    .upi-id-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background-color: #f9f9f9;
+      border-bottom: 1px solid #eee;
+      gap: 8px;
+    }
+
+    .upi-id-row .label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      white-space: nowrap;
+    }
+
+    .upi-id-value-wrap {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 6px 8px;
+      margin-left: 8px;
+      overflow: hidden;
+    }
+
+    .upi-id-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: #000;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .copy-btn {
+      background-color: #5ac18a;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      margin-left: 8px;
+      transition: background 0.15s;
+    }
+
+    .copy-btn:hover {
+      background-color: #49a876;
+    }
+
+    /* ===== FORM ===== */
+    .popup-form {
+      padding: 10px 16px 14px;
+    }
+
+    .form-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .form-row .form-label {
+      font-size: 14px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .form-input-wrap {
+      display: flex;
+      flex: 1;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .form-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 8px 10px;
+      font-size: 13px;
+      min-width: 0;
+    }
+
+    .submit-btn {
+      background-color: #5ac18a;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .submit-btn:hover {
+      background-color: #49a876;
+    }
+
+    .form-hint {
+      font-size: 11px;
+      color: #888;
+      padding-left: 2px;
+    }
+
+    /* ===== RESPONSIVE TWEAKS ===== */
+    @media (max-width: 360px) {
+      .amount-num {
+        font-size: 22px;
+      }
+
+      .upi-id-text {
+        font-size: 11px;
+      }
+
+      .upi-icon-lg {
+        width: 32px;
+        height: 32px;
+      }
+
+      .upi-label {
+        font-size: 10px;
+      }
+    }
+
+    @media (min-width: 600px) {
+      body {
+        background-color: #e8e8e8;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      #app {
+        margin: 30px auto;
+        min-height: unset;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+        overflow: hidden;
+      }
+
+      header {
+        border-radius: 0;
+      }
+
+      .floating-bottom {
+        position: sticky;
+        bottom: 0;
+        transform: none;
+        left: auto;
+        border-radius: 0 0 16px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- HEADER -->
+    <header>
+      <div id="countdown-container">
+        <div id="countdown-label">Time remaining:</div>
+        <div id="countdown-time">05:37</div>
+      </div>
+      <div class="amount-num">
+        <span>&#8377;</span><span>500.00</span>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main>
+      <!-- QR Section -->
+      <div class="step-wrapper">
+        <p style="font-weight: bold;">Scan Code To Pay</p>
+      </div>
+
+      <div class="qrcode" title="UPI QR Code">
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=6205823843-a451-3@ibl%26cu=INR%26pn=Payment%20for%20Aditya%20raj%26am=500.00%26tn=DCafK%26tr=S17763008238541179163"
+          alt="UPI QR Code"
+          width="150"
+          height="150"
+        />
+      </div>
+
+      <div class="step-wrapper">
+        <p>Do not use same QR code to pay multiple times</p>
+      </div>
+
+      <!-- Divider -->
+      <div class="divider-with-text">
+        <span class="divider-text">OR</span>
+      </div>
+
+      <!-- Select app label -->
+      <p class="select-label">Select a payment app below to proceed automatically:</p>
+
+      <!-- Vertical UPI list with arrows -->
+      <ul class="upi-list-vertical">
+        <li class="upi-item-row"
+            onclick="openUPI('paytmmp://cash_wallet?pa=6205823843-a451-3@ibl&cu=INR&pn=Payment for Aditya raj&am=500.00&tn=DCafK')">
+          <div class="upi-info-row">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/4/42/Paytm_logo.png"
+              class="upi-icon-sm" alt="Paytm" />
+            <span class="upi-name-row">Paytm</span>
+          </div>
+          <span style="color:#aaa; font-size:18px;">&#8250;</span>
+        </li>
+        <li class="upi-item-row"
+            onclick="openUPI('phonepe://pay?pa=6205823843-a451-3@ibl&cu=INR&pn=Payment for Aditya raj&am=500.00&tn=DCafK')">
+          <div class="upi-info-row">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/PhonePe_Logo.svg/512px-PhonePe_Logo.svg.png"
+              class="upi-icon-sm" alt="PhonePe" />
+            <span class="upi-name-row">PhonePe</span>
+          </div>
+          <span style="color:#aaa; font-size:18px;">&#8250;</span>
+        </li>
+        <li class="upi-item-row"
+            onclick="openUPI('tez://upi/pay?pa=6205823843-a451-3@ibl&cu=INR&pn=Payment for Aditya raj&am=500.00&tn=DCafK')">
+          <div class="upi-info-row">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png"
+              class="upi-icon-sm" alt="Google Pay" />
+            <span class="upi-name-row">Google Pay</span>
+          </div>
+          <span style="color:#aaa; font-size:18px;">&#8250;</span>
+        </li>
+      </ul>
+
+      <!-- Horizontal icon row -->
+      <ul class="upi-list-horizontal">
+        <li class="upi-item-icon"
+            onclick="openUPI('paytmmp://cash_wallet?pa=6205823843-a451-3@ibl&cu=INR&pn=Payment for Aditya raj&am=500.00&tn=DCafK')">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/4/42/Paytm_logo.png"
+            class="upi-icon-lg" alt="Paytm" />
+          <span class="upi-label">Paytm</span>
+        </li>
+        <li class="upi-item-icon"
+            onclick="openUPI('phonepe://pay?pa=6205823843-a451-3@ibl&cu=INR&pn=Payment for Aditya raj&am=500.00&tn=DCafK')">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/PhonePe_Logo.svg/512px-PhonePe_Logo.svg.png"
+            class="upi-icon-lg" alt="PhonePe" />
+          <span class="upi-label">PhonePe</span>
+        </li>
+        <li class="upi-item-icon"
+            onclick="openUPI('tez://upi/pay?pa=6205823843-a451-3@ibl&cu=INR&pn=Payment for Aditya raj&am=500.00&tn=DCafK')">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png"
+            class="upi-icon-lg" alt="Google Pay" />
+          <span class="upi-label">GooglePay</span>
+        </li>
+        <li class="upi-item-icon"
+            onclick="openUPI('upi://pay?pa=6205823843-a451-3@ibl&cu=INR&pn=Payment for Aditya raj&am=500.00&tn=DCafK')">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/UPI_Logo_New.svg/512px-UPI_Logo_New.svg.png"
+            class="upi-icon-lg" alt="UPI" />
+          <span class="upi-label">UPI</span>
+        </li>
+      </ul>
+
+      <div class="step-wrapper">
+        <p style="font-weight: bold;">Copy Account To Pay</p>
+      </div>
+    </main>
+
+    <!-- FLOATING BOTTOM -->
+    <div class="floating-bottom">
+      <!-- UPI ID Copy Row -->
+      <div class="upi-id-row">
+        <span class="label">account</span>
+        <div class="upi-id-value-wrap">
+          <span class="upi-id-text" id="upiIdText">6205823843-a451-3@ibl</span>
+          <button class="copy-btn" onclick="copyUPI()">copy</button>
+        </div>
+      </div>
+
+      <!-- UTR Form -->
+      <form class="popup-form" onsubmit="submitUTR(event)">
+        <div class="form-row">
+          <span class="form-label">UTR</span>
+          <div class="form-input-wrap">
+            <input
+              type="number"
+              maxlength="12"
+              autocomplete="off"
+              placeholder="Input 12-digit UTR here"
+              class="form-input"
+              id="utrInput"
+            />
+            <button type="submit" class="submit-btn">submit</button>
+          </div>
+        </div>
+        <div class="form-hint">
+          If payment is not auto-detected, enter the UTR and click submit.
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ---- Countdown Timer ----
+    (function () {
+      let totalSeconds = 5 * 60 + 37;
+      const el = document.getElementById('countdown-time');
+
+      function tick() {
+        if (totalSeconds <= 0) {
+          el.textContent = '00:00';
+          return;
+        }
+        totalSeconds--;
+        const m = Math.floor(totalSeconds / 60);
+        const s = totalSeconds % 60;
+        el.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        setTimeout(tick, 1000);
+      }
+
+      tick();
+    })();
+
+    // ---- Open UPI deep link ----
+    function openUPI(url) {
+      window.location.href = url;
+    }
+
+    // ---- Copy UPI ID ----
+    function copyUPI() {
+      const text = document.getElementById('upiIdText').textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          showToast('UPI ID copied!');
+        });
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('UPI ID copied!');
+      }
+    }
+
+    // ---- Submit UTR ----
+    function submitUTR(e) {
+      e.preventDefault();
+      const val = document.getElementById('utrInput').value.trim();
+      if (!val || val.length < 12) {
+        showToast('Please enter a valid 12-digit UTR number.');
+        return;
+      }
+      showToast('UTR submitted: ' + val);
+    }
+
+    // ---- Toast ----
+    function showToast(msg) {
+      let toast = document.getElementById('_toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = '_toast';
+        toast.style.cssText = [
+          'position:fixed', 'bottom:230px', 'left:50%', 'transform:translateX(-50%)',
+          'background:#333', 'color:#fff', 'padding:8px 18px', 'border-radius:20px',
+          'font-size:13px', 'z-index:9999', 'pointer-events:none',
+          'transition:opacity 0.3s', 'white-space:nowrap'
+        ].join(';');
+        document.body.appendChild(toast);
+      }
+      toast.textContent = msg;
+      toast.style.opacity = '1';
+      clearTimeout(toast._timeout);
+      toast._timeout = setTimeout(function () {
+        toast.style.opacity = '0';
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

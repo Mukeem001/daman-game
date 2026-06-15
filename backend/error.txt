@@ -1,0 +1,17 @@
+C:\Users\mohdm\OneDrive\Desktop\damanmain (2)\damanmain\dhancash\backend\node_modules\mongoose\lib\index.js:566
+      throw new _mongoose.Error.OverwriteModelError(name);
+      ^
+
+OverwriteModelError: Cannot overwrite `wingo1min` model once compiled.
+    at Mongoose.model (C:\Users\mohdm\OneDrive\Desktop\damanmain (2)\damanmain\dhancash\backend\node_modules\mongoose\lib\index.js:566:13)
+    at Object.<anonymous> (C:\Users\mohdm\OneDrive\Desktop\damanmain (2)\damanmain\dhancash\backend\Modals\Wingo1minbetcontrol.js:23:27)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (C:\Users\mohdm\OneDrive\Desktop\damanmain (2)\damanmain\dhancash\backend\Router\admin.js:11:29)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+
+Node.js v20.20.1

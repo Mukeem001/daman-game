@@ -1,0 +1,1 @@
+# Daman-Admin Approve/Reject Fix&#10;&#10;- [ ] Read deposits.tsx, withdrawals.tsx&#10;- [ ] Create useApproveDeposit/useRejectDeposit hooks&#10;- [ ] Backend APIs: /api/admin/deposits/:id/approve, /pay/admin-approve&#10;- [ ] Update pages with real mutations&#10;- [ ] Test wallet balance updates&#10;
