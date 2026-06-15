@@ -1,6 +1,6 @@
 // Environment Configuration
 // Remove trailing slash from API URL if present
-const RAW_API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const RAW_API_URL = process.env.REACT_APP_API_URL || "https://daman-games-47sx.onrender.com";
 const API_BASE_URL = RAW_API_URL.endsWith('/') ? RAW_API_URL.slice(0, -1) : RAW_API_URL;
 const NODE_ENV = process.env.NODE_ENV || "development";
 const API_TIMEOUT = 10000; // 10 seconds

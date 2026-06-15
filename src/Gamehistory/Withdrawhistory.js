@@ -9,7 +9,7 @@ function Withdrawhistory() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
-    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/';
+    const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://daman-games-47sx.onrender.com/';
 
     useEffect(() => {
       const token = localStorage.getItem("token");

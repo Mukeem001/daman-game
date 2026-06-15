@@ -26,7 +26,7 @@ function Gamehistory() {
 	const fetchBetHistory = async (token, gameType) => {
 		try {
 			setLoading(true);
-			const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/';
+			const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://daman-games-47sx.onrender.com/';
 			const response = await fetch(`${API_BASE_URL}api/bet/history`, {
 				headers: { 'auto-token': token }
 			});

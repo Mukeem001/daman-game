@@ -26,7 +26,7 @@ function Withdraw() {
 
     const fetchUserBalance = async (token) => {
       try {
-        const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+        const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://daman-games-47sx.onrender.com/';
         const response = await fetch(`${API_BASE_URL}api/user/Getuser`, {
           headers: { 
             'Content-Type': 'application/json',
@@ -44,7 +44,7 @@ function Withdraw() {
 
     const fetchWithdrawalHistory = async (token) => {
       try {
-        const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+        const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://daman-games-47sx.onrender.com/';
         const response = await fetch(`${API_BASE_URL}api/withdraw/history`, {
           headers: { 
             'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ function Withdraw() {
       try {
         setLoading(true);
         const token = localStorage.getItem("token");
-        const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+        const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://daman-games-47sx.onrender.com/';
 
         console.log('Sending withdrawal request:', { amount, method: selectedMethod });
 

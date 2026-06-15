@@ -66,7 +66,7 @@ function VerifyUTR() {
         return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     };
 
-    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/';
+    const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://daman-games-47sx.onrender.com/';
 
     const handleUTRSubmit = async (e) => {
         e.preventDefault();

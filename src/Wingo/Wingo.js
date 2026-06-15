@@ -38,7 +38,7 @@ function Wingo() {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        const apiUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}api/user/Getuser`;
+        const apiUrl = `${process.env.REACT_APP_API_URL || 'https://daman-games-47sx.onrender.com/'}api/user/Getuser`;
         const response = await fetch(apiUrl, {
           method: 'GET',
           headers: { 

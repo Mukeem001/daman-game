@@ -57,7 +57,7 @@ const AddBeneficiary = () => {
     const fetchBeneficiary = async (token, method = selectedMethod) => {
         try {
             setFetchingBeneficiary(true);
-            const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+            const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://daman-games-47sx.onrender.com/';
             console.log('🔍 Fetching beneficiary:', `${API_BASE_URL}api/withdraw/beneficiary?method=${method}`);
             
             const response = await fetch(`${API_BASE_URL}api/withdraw/beneficiary?method=${method}`, {
@@ -190,7 +190,7 @@ const AddBeneficiary = () => {
         setMessage('');
 
         try {
-            const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+            const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://daman-games-47sx.onrender.com/';
             const submitData = { 
                 fullName: formData.fullName.trim(),
                 method: selectedMethod 
