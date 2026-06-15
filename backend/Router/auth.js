@@ -15,10 +15,10 @@ const ADMIN_CREDENTIALS = {
 // Hash the admin password during startup
 let hashedAdminPassword = null;
 
-const initializeAdminPassword = async () => {
+const initializeAdminPassword = () => {
   try {
-    const salt = await bcrypt.genSaltSync(10);
-    hashedAdminPassword = await bcrypt.hashSync(ADMIN_CREDENTIALS.password, salt);
+    const salt = bcrypt.genSaltSync(10);
+    hashedAdminPassword = bcrypt.hashSync(ADMIN_CREDENTIALS.password, salt);
     console.log("✅ Admin password initialized");
   } catch (error) {
     console.error("❌ Error hashing admin password:", error);
