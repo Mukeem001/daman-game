@@ -57,4 +57,5 @@ const UserSchema = new Schema({
   },
 });
 
-module.exports = mongoose.model("wingo1min", UserSchema);
+// Use Wingo1minbetcontrol.js instead - this prevents model duplication
+module.exports = require("./Wingo1minbetcontrol.js");
