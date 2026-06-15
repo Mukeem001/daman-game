@@ -147,29 +147,17 @@ router.get("/getuserbethis", fetchmidle, async (req, res) => {
 // POST /api/userbethistory/adduserbethis - Place a bet (auth required)
 router.post("/adduserbethis", fetchmidle, async (req, res) => {
   try {
-    const prionnoString = req.body.priodno.toString();
+    const prionnoString = req.body.priodno.toString().trim();
     const gameType = ALLOWED_GAME_TYPES.includes(req.body.gameType) ? req.body.gameType : "1min";
-    const selectValue = req.body.select.toString().toLowerCase();
+    const selectValue = req.body.select.toString().toLowerCase().trim();
+    const userId = req.user.id.toString();
 
-    // ✅ CHECK FOR DUPLICATE: If user already placed same bet in same period with same selection, return existing
-    const existingBet = await Userbethistory.findOne({
-      userId: req.user.id,
-      priodno: prionnoString,
-      gameType,
-      select: selectValue,
-    });
+    console.log(`📌 Bet Request: userId=${userId}, priodno=${prionnoString}, gameType=${gameType}, select=${selectValue}`);
 
-    if (existingBet) {
-      console.log(`⚠️  Duplicate bet prevented: User ${req.user.id} already bet on ${selectValue} for period ${prionnoString} (${gameType})`);
-      return res.status(400).json({ 
-        error: "Duplicate bet", 
-        details: "You already placed a bet on this selection for this period",
-        existingBet: existingBet._id 
-      });
-    }
-
+    // ✅ ATOMIC: Try to create bet - MongoDB will enforce unique index
+    // If duplicate exists, we'll get E11000 error
     const notes = new Userbethistory({
-      userId: req.user.id,
+      userId,
       priodno: prionnoString,
       pamount: req.body.pamount,
       amountaftertax: req.body.amountaftertax,
@@ -178,13 +166,41 @@ router.post("/adduserbethis", fetchmidle, async (req, res) => {
       resultbigsmall: req.body.resultbigsmall,
       select: selectValue,
       gameType,
-      status: req.body.status,
+      status: req.body.status || "pending",
       winloss: req.body.winloss,
       ordertime: req.body.ordertime,
       tax: req.body.tax,
     });
 
-    const data = await notes.save();
+    let data;
+    try {
+      data = await notes.save();
+      console.log(`✅ New bet created: ${data._id}`);
+    } catch (saveError) {
+      // If duplicate key error, return existing bet
+      if (saveError.code === 11000) {
+        console.warn(`⚠️  E11000 Duplicate Key: User=${userId}, Period=${prionnoString}, GameType=${gameType}, Select=${selectValue}`);
+        
+        const existingBet = await Userbethistory.findOne({
+          userId,
+          priodno: prionnoString,
+          gameType,
+          select: selectValue,
+        });
+        
+        if (existingBet) {
+          console.log(`📌 Returning existing bet: ${existingBet._id}`);
+          return res.status(400).json({
+            error: "Duplicate bet",
+            details: "You already placed a bet on this selection for this period",
+            existingBet: existingBet._id,
+            status: existingBet.status,
+          });
+        }
+        throw saveError;
+      }
+      throw saveError;
+    }
 
     // 🎯 Update betcontrol with this bet amount (fire-and-forget, don't block response)
     updateBetcontrol(selectValue, req.body.amountaftertax || req.body.pamount, prionnoString, gameType).catch((err) =>
@@ -194,11 +210,13 @@ router.post("/adduserbethis", fetchmidle, async (req, res) => {
     // Auto-check if result already exists for this period
     const gameHistoryModel = getHistoryModelByGameType(gameType);
     const gameResult = await gameHistoryModel.findOne({ periodno: prionnoString });
+    
     if (gameResult && gameResult.betnumbers) {
       const resultNumber = parseInt(gameResult.betnumbers);
       if (!isNaN(resultNumber)) {
-        const isWin = calculateWin(req.body.select, resultNumber, gameResult.color, gameResult.bigsmall);
+        const isWin = calculateWin(selectValue, resultNumber, gameResult.color, gameResult.bigsmall);
         const winloss = isWin ? req.body.amountaftertax * 2 : -req.body.amountaftertax;
+        
         const updatedData = await Userbethistory.findByIdAndUpdate(
           data._id,
           {
@@ -212,9 +230,12 @@ router.post("/adduserbethis", fetchmidle, async (req, res) => {
           },
           { new: true }
         );
+        
+        console.log(`✅ Bet resolved immediately: ${isWin ? 'WIN' : 'LOSS'} ${winloss}`);
+        
         // Pay commission immediately (fire-and-forget, don't block response)
         if (req.body.pamount > 0) {
-          payCommissionForBet(req.user.id, req.body.pamount).catch((err) =>
+          payCommissionForBet(userId, req.body.pamount).catch((err) =>
             console.error("Commission error (immediate):", err.message)
           );
         }
@@ -224,17 +245,17 @@ router.post("/adduserbethis", fetchmidle, async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    console.error("Error saving bet:", error.message);
+    console.error("❌ Error saving bet:", error.message);
     
     // ✅ Handle MongoDB duplicate key error (E11000)
     if (error.code === 11000) {
-      console.log(`⚠️  Duplicate key error caught: ${JSON.stringify(error.keyPattern)}`);
-      return res.status(400).json({ 
-        error: "Duplicate bet", 
-        details: "This bet selection already exists for this period and game type"
+      return res.status(400).json({
+        error: "Duplicate bet",
+        details: "This bet selection already exists for this period",
+        keyPattern: error.keyPattern,
       });
     }
-    
+
     res.status(400).json({ error: "Please try again", details: error.message });
   }
 });
