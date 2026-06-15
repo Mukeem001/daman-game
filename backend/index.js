@@ -9,9 +9,8 @@ const historywingoitem = require("./Modals/Historywingo1min.js");
 const betcontrol = require("./Modals/Betcontrol.js");
 const { startWingoMultiTimerSchedulers } = require("./services/wingoMultiTimerScheduler");
 
-mongooseCon();
-
 const app = express();
+let schedulersStarted = false;
 
 // CORS configuration for custom headers
 app.use(cors({
@@ -498,45 +497,46 @@ const callUpdateWingoItems = async () => {
 // setInterval(() => { ... }, 1000);
 
 // ============ SCHEDULER: Auto-update pending bets every second ============
-let lastSchedulerRun = 0;
-const schedulerInterval = setInterval(async () => {
-  try {
-    const now = Date.now();
-    
-    // Run every 5 seconds to avoid overwhelming the system
-    if (now - lastSchedulerRun < 5000) {
-      return;
-    }
-    
-    lastSchedulerRun = now;
-    
-    console.log(`⏰ [SCHEDULER] Running master auto-update at ${new Date().toISOString()}`);
-    
-    // Call the master auto-update endpoint
-    const response = await axios.post(
-      `http://localhost:${port}/api/userbethistory/masterautoUpdate`,
-      {},
-      { 
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 10000 
+const startAutoUpdateScheduler = () => {
+  let lastSchedulerRun = 0;
+  const schedulerInterval = setInterval(async () => {
+    try {
+      const now = Date.now();
+      
+      // Run every 5 seconds to avoid overwhelming the system
+      if (now - lastSchedulerRun < 5000) {
+        return;
       }
-    );
-    
-    if (response.data && response.data.results) {
-      const { totalUpdated, wins, losses } = response.data.results;
-      if (totalUpdated > 0) {
-        console.log(`✅ [SCHEDULER] Updated ${totalUpdated} bets (${wins} wins, ${losses} losses)`);
-      } else {
-        console.log(`ℹ️  [SCHEDULER] No pending bets to update`);
+      
+      lastSchedulerRun = now;
+      
+      console.log(`⏰ [SCHEDULER] Running master auto-update at ${new Date().toISOString()}`);
+      
+      // Call the master auto-update endpoint
+      const response = await axios.post(
+        `http://localhost:${port}/api/userbethistory/masterautoUpdate`,
+        {},
+        { 
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 10000 
+        }
+      );
+      
+      if (response.data && response.data.results) {
+        const { totalUpdated, wins, losses } = response.data.results;
+        if (totalUpdated > 0) {
+          console.log(`✅ [SCHEDULER] Updated ${totalUpdated} bets (${wins} wins, ${losses} losses)`);
+        } else {
+          console.log(`ℹ️  [SCHEDULER] No pending bets to update`);
+        }
       }
+    } catch (error) {
+      console.error(`❌ [SCHEDULER] Error:`, error.message);
     }
-  } catch (error) {
-    console.error(`❌ [SCHEDULER] Error:`, error.message);
-  }
-}, 1000);
-
-console.log("🟢 [SCHEDULER] Auto-update scheduler started - will run every 5 seconds");
-startWingoMultiTimerSchedulers();
+  }, 1000);
+  
+  console.log("🟢 [SCHEDULER] Auto-update scheduler started - will run every 5 seconds");
+};
 
 // 404 handler - routes not found
 
@@ -624,8 +624,29 @@ const scheduleMidnightCommission = () => {
     setInterval(calculateAndPayCommissions, 24 * 60 * 60 * 1000);
   }, msToMidnight);
 };
-scheduleMidnightCommission();
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
+// ============ INITIALIZE SERVER WITH MONGODB CONNECTION ============
+const initializeServer = async () => {
+  try {
+    // Connect to MongoDB
+    await mongooseCon();
+    
+    // Start the Express server
+    app.listen(port, () => {
+      console.log(`Example app listening on port ${port}`);
+    });
+    
+    // Start schedulers AFTER MongoDB is connected
+    scheduleMidnightCommission();
+    startAutoUpdateScheduler();
+    startWingoMultiTimerSchedulers();
+    schedulersStarted = true;
+    
+  } catch (error) {
+    console.error("❌ Failed to initialize server:", error);
+    process.exit(1);
+  }
+};
+
+// Start the server
+initializeServer();
