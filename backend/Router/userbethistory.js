@@ -149,6 +149,24 @@ router.post("/adduserbethis", fetchmidle, async (req, res) => {
   try {
     const prionnoString = req.body.priodno.toString();
     const gameType = ALLOWED_GAME_TYPES.includes(req.body.gameType) ? req.body.gameType : "1min";
+    const selectValue = req.body.select.toString().toLowerCase();
+
+    // ✅ CHECK FOR DUPLICATE: If user already placed same bet in same period with same selection, return existing
+    const existingBet = await Userbethistory.findOne({
+      userId: req.user.id,
+      priodno: prionnoString,
+      gameType,
+      select: selectValue,
+    });
+
+    if (existingBet) {
+      console.log(`⚠️  Duplicate bet prevented: User ${req.user.id} already bet on ${selectValue} for period ${prionnoString} (${gameType})`);
+      return res.status(400).json({ 
+        error: "Duplicate bet", 
+        details: "You already placed a bet on this selection for this period",
+        existingBet: existingBet._id 
+      });
+    }
 
     const notes = new Userbethistory({
       userId: req.user.id,
@@ -158,7 +176,7 @@ router.post("/adduserbethis", fetchmidle, async (req, res) => {
       resultnumber: req.body.resultnumber,
       resultcolor: req.body.resultcolor,
       resultbigsmall: req.body.resultbigsmall,
-      select: req.body.select,
+      select: selectValue,
       gameType,
       status: req.body.status,
       winloss: req.body.winloss,
@@ -169,7 +187,7 @@ router.post("/adduserbethis", fetchmidle, async (req, res) => {
     const data = await notes.save();
 
     // 🎯 Update betcontrol with this bet amount (fire-and-forget, don't block response)
-    updateBetcontrol(req.body.select, req.body.amountaftertax || req.body.pamount, prionnoString, gameType).catch((err) =>
+    updateBetcontrol(selectValue, req.body.amountaftertax || req.body.pamount, prionnoString, gameType).catch((err) =>
       console.error("Betcontrol update error:", err.message)
     );
 
@@ -206,7 +224,17 @@ router.post("/adduserbethis", fetchmidle, async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    console.error("Error saving bet:", error);
+    console.error("Error saving bet:", error.message);
+    
+    // ✅ Handle MongoDB duplicate key error (E11000)
+    if (error.code === 11000) {
+      console.log(`⚠️  Duplicate key error caught: ${JSON.stringify(error.keyPattern)}`);
+      return res.status(400).json({ 
+        error: "Duplicate bet", 
+        details: "This bet selection already exists for this period and game type"
+      });
+    }
+    
     res.status(400).json({ error: "Please try again", details: error.message });
   }
 });
